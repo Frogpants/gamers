@@ -1,4 +1,4 @@
-import GameObject from './GameObject.js';
+import GameObject from '../../essentials/GameObject.js';
 
 /** Parallax Background GameObject
  * - Tiling: draw multiple of the image to fill the gameCanvas extents
@@ -27,34 +27,26 @@ export class BackgroundParallax extends GameObject {
         this.image.src = data.src;
         this.isInitialized = false; // Flag to track initialization
         
+        // Create the canvas element and set up initial styles
+        this.canvas = document.createElement("canvas");
+        this.canvas.style.display = "block";
+        this.canvas.style.position = "absolute";
+        this.canvas.style.top = "0";
+        this.canvas.style.left = "0";
+        this.canvas.style.zIndex = this.data.zIndex || "1";
+        this.canvas.id = data.id || "backgroundParallax";
+        this.ctx = this.canvas.getContext("2d", { willReadFrequently: true });
+        document.getElementById("gameContainer").appendChild(this.canvas);
+        
         // Finish initializing the background after the image loads 
         this.image.onload = () => {
             // Width and height come from the image
             this.width = this.image.width;
             this.height = this.image.height;
-
-            // Create the canvas element and context
-            this.canvas = document.createElement("canvas");
-            this.canvas.style.position = "absolute";
-            this.canvas.id = data.id || "parallax-background";
-            this.ctx = this.canvas.getContext("2d");
             
-            // Set z-index and opacity directly instead of using data
-            this.canvas.style.zIndex = "1"; // Use positive value to ensure visibility
-            this.canvas.style.opacity = "0.3"; // 30% opacity
-            
-            // Align the canvas size to the gameCanvas
+            // Align canvas to gameCanvas dimensions
             this.alignCanvas();
-
-            // Append the canvas to the DOM first in the container to be behind everything
-            const gameContainer = document.getElementById("gameContainer");
-            if (gameContainer.firstChild) {
-                gameContainer.insertBefore(this.canvas, gameContainer.firstChild);
-            } else {
-                gameContainer.appendChild(this.canvas);
-            }
-            
-            this.isInitialized = true; // Mark as initialized
+            this.isInitialized = true;
         };
         
         this.image.onerror = () => {
@@ -75,27 +67,30 @@ export class BackgroundParallax extends GameObject {
         
         this.canvas.width = gameCanvas.width;
         this.canvas.height = gameCanvas.height;
-        this.canvas.style.left = gameCanvas.style.left;
-        this.canvas.style.top = gameCanvas.style.top;
+        this.canvas.style.width = `${gameCanvas.width}px`;
+        this.canvas.style.height = `${gameCanvas.height}px`;
     }
 
     /**
      * Update is called by GameLoop on all GameObjects 
      */
     update() {
-        // Update the position for parallax scrolling
-        this.position.x -= this.velocity; // Move left
-        this.position.y += this.velocity; // Move down (for snowfall effect)
+        // Only update position if game is not paused
+        if (!this.gameEnv.gameControl || !this.gameEnv.gameControl.isPaused) {
+            // Update the position for parallax scrolling
+            this.position.x -= this.velocity; // Move left
+            this.position.y += this.velocity; // Move down (for snowfall effect)
 
-        // Wrap the position to prevent overflow
-        if (this.position.x < -this.width) {
-            this.position.x = 0;
-        }
-        if (this.position.y > this.height) {
-            this.position.y = 0;
+            // Wrap the position to prevent overflow
+            if (this.position.x < -this.width) {
+                this.position.x = 0;
+            }
+            if (this.position.y > this.height) {
+                this.position.y = 0;
+            }
         }
 
-        // Draw the background image
+        // Always draw the background image, even when paused
         this.draw();
     }
 

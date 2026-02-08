@@ -1,5 +1,6 @@
-import Character from './Character.js';
-import TouchControls from './TouchControls.js';
+import Character from '../essentials/Character.js';
+import TouchControls from '../features/TouchControls.js';
+
 
 // Define non-mutable constants as defaults
 const SCALE_FACTOR = 25; // 1/nth of the height of the canvas
@@ -28,7 +29,7 @@ class Player extends Character {
         this.pressedKeys = {}; // active keys array
         this.bindMovementKeyListners();
         this.gravity = data.GRAVITY || false;
-        this.acceleration = 0.001;
+        this.acceleration = 1;
         this.time = 0;
         this.moved = false;
         // Initialize touch controls for mobile devices
@@ -50,7 +51,8 @@ class Player extends Character {
         // capture the pressed key in the active keys array
         this.pressedKeys[keyCode] = true;
         // set the velocity and direction based on the newly pressed key
-        this.updateVelocityAndDirection();
+        this.updateVelocity();
+        this.updateDirection();
     }
 
     /**
@@ -66,66 +68,111 @@ class Player extends Character {
             delete this.pressedKeys[keyCode];
         }
         // adjust the velocity and direction based on the remaining keys
-        this.updateVelocityAndDirection();
+        this.updateDirection();
     }
 
     /**
      * Update the player's velocity and direction based on the pressed keys.
      */
-    updateVelocityAndDirection() {
-        this.velocity.x = 0;
-        this.velocity.y = 0;
 
-        // Multi-key movements (diagonals: upLeft, upRight, downLeft, downRight)
-        if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.left]) {
-            this.velocity.y -= this.yVelocity;
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'upLeft';
-        } else if (this.pressedKeys[this.keypress.up] && this.pressedKeys[this.keypress.right]) {
-            this.velocity.y -= this.yVelocity;
-            this.velocity.x += this.xVelocity;
-            this.direction = 'upRight';
-        } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.left]) {
-            this.velocity.y += this.yVelocity;
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'downLeft';
-        } else if (this.pressedKeys[this.keypress.down] && this.pressedKeys[this.keypress.right]) {
-            this.velocity.y += this.yVelocity;
-            this.velocity.x += this.xVelocity;
-            this.direction = 'downRight';
-        // Single key movements (left, right, up, down) 
-        } else if (this.pressedKeys[this.keypress.up]) {
-            this.velocity.y -= this.yVelocity;
-            this.direction = 'up';
+    updateVelocity() {
+        this.moved = false;
+
+        if (this.pressedKeys[this.keypress.right] || this.pressedKeys[this.keypress.left]) {
             this.moved = true;
-        } else if (this.pressedKeys[this.keypress.left]) {
-            this.velocity.x -= this.xVelocity;
-            this.direction = 'left';
+
+            if (this.pressedKeys[this.keypress.right]) {
+                this.transform.xv += 1.2 * this.time;
+            }
+
+            else if (this.pressedKeys[this.keypress.left]) {
+                this.transform.xv -= 1.2 * this.time;
+            }
+        }
+
+        if (this.pressedKeys[this.keypress.up] || this.pressedKeys[this.keypress.down]) {
             this.moved = true;
+
+            if (this.pressedKeys[this.keypress.up]) {
+                this.transform.yv -= 1.2 * this.time;
+            }
+
+            else if (this.pressedKeys[this.keypress.down]) {
+                this.transform.yv += 0.6 * this.time;
+            }
+        }
+
+        this.transform.xv *= 0.7;
+        this.transform.yv *= 0.7;
+    }
+
+    updateDirection() {       
+        // Single-key movement
+        if (this.pressedKeys[this.keypress.up]) {
+            this.direction = "up";
         } else if (this.pressedKeys[this.keypress.down]) {
-            this.velocity.y += this.yVelocity;
-            this.direction = 'down';
-            this.moved = true;
+            this.direction = "down";
         } else if (this.pressedKeys[this.keypress.right]) {
-            this.velocity.x += this.xVelocity;
-            this.direction = 'right';
-            this.moved = true;
-        } else{
-            this.moved = false;
+            this.direction = "right";
+        } else if (this.pressedKeys[this.keypress.left]) {
+            this.direction = "left";
+        }
+
+        // Multi-key movement
+        if (this.pressedKeys[this.keypress.left] && this.pressedKeys[this.keypress.up]) {
+            this.direction = "upLeft";
+        } else if (this.pressedKeys[this.keypress.left] && this.pressedKeys[this.keypress.down]) {
+            this.direction = "downLeft";
+        } else if (this.pressedKeys[this.keypress.right] && this.pressedKeys[this.keypress.up]) {
+            this.direction = "upRight";
+        } else if (this.pressedKeys[this.keypress.right] && this.pressedKeys[this.keypress.down]) {
+            this.direction = "downRight";
         }
     }
+
     update() {
-        super.update();
+        this.updateVelocity();
+        
+        // Apply gravity before position update (which super.update will handle)
         if(!this.moved){
             if (this.gravity) {
                     this.time += 1;
-                    this.velocity.y += 0.5 + this.acceleration * this.time;
+                    this.transform.yv -= this.acceleration * -this.time;
                 }
             }
         else{
-            this.time = 0;
+            this.time = 1;
         }
+
+        // Apply velocity to position
+        this.transform.x += this.transform.xv * this.time;
+        this.transform.y += this.transform.yv * this.time;
+        
+        // Apply walking area boundaries if defined in sprite data
+        if (this.data && this.data.walkingArea) {
+            const walkingArea = this.data.walkingArea;
+            
+            if (this.transform.x < walkingArea.xMin) {
+                this.transform.x = walkingArea.xMin;
+                this.transform.xv = 0;
+            }
+            if (this.transform.x + this.width > walkingArea.xMax) {
+                this.transform.x = walkingArea.xMax - this.width;
+                this.transform.xv = 0;
+            }
+            if (this.transform.y < walkingArea.yMin) {
+                this.transform.y = walkingArea.yMin;
+                this.transform.yv = 0;
+            }
+            if (this.transform.y + this.height > walkingArea.yMax) {
+                this.transform.y = walkingArea.yMax - this.height;
+                this.transform.yv = 0;
+            }
         }
+        
+        // Call super.update() to handle collision checks and rendering
+        super.update();
+    }
         
     /**
      * Overrides the reaction to the collision to handle
@@ -136,7 +183,8 @@ class Player extends Character {
      */
     handleCollisionReaction(other) {    
         this.pressedKeys = {};
-        this.updateVelocityAndDirection();
+        this.updateVelocity();
+        this.updateDirection();
         super.handleCollisionReaction(other);
     }
 

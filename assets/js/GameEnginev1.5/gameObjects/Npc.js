@@ -1,6 +1,6 @@
 // Npc.js with DialogueSystem integration
-import Character from "./Character.js";
-import DialogueSystem from "../DialogueSystem.js";
+import Character from "../essentials/Character.js";
+import DialogueSystem from "../features/DialogueSystem.js";
 
 class Npc extends Character {
     constructor(data = null, gameEnv = null) {
@@ -20,7 +20,7 @@ class Npc extends Character {
         if (data?.dialogues) {
             this.dialogueSystem = new DialogueSystem({
                 dialogues: data.dialogues,
-                
+                gameControl: gameEnv?.gameControl,
                 id: this.uniqueId
             });
         } else {
@@ -32,6 +32,7 @@ class Npc extends Character {
                     "Nice weather we're having, isn't it?",
                     "I've been standing here for quite some time."
                 ],
+                gameControl: gameEnv?.gameControl,
                 // Pass unique ID to prevent conflicts
                 id: this.uniqueId
             });
@@ -45,14 +46,18 @@ class Npc extends Character {
 
     update() {
         this.draw();
-        // Check if player is still in collision - add null checks
-        const players = this.gameEnv.gameObjects.filter(
-            obj => obj && obj.state && obj.state.collisionEvents && obj.state.collisionEvents.includes(this.spriteData.id)
-        );
         
-        // Reset interaction state if player moved away
-        if (players.length === 0 && this.isInteracting) {
-            this.isInteracting = false;
+        // Only check collision state when not paused
+        if (!this.gameEnv.gameControl || !this.gameEnv.gameControl.isPaused) {
+            // Check if player is still in collision - add null checks
+            const players = this.gameEnv.gameObjects.filter(
+                obj => obj && obj.state && obj.state.collisionEvents && obj.state.collisionEvents.includes(this.spriteData.id)
+            );
+            
+            // Reset interaction state if player moved away
+            if (players.length === 0 && this.isInteracting) {
+                this.isInteracting = false;
+            }
         }
     }
 
