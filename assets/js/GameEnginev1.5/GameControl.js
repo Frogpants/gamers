@@ -18,7 +18,6 @@ class GameControl {
         this.currentLevelIndex = 0;
         this.gameLoopCounter = 0;
         this.isPaused = false;
-        this.exitKeyListener = this.handleExitKey.bind(this);
         this.gameOver = null; // Callback for when the game is over 
         this.savedCanvasState = []; // Save the current levels game elements 
         
@@ -30,7 +29,6 @@ class GameControl {
 
     
     start() {
-        this.addExitKeyListener();
         this.transitionToLevel();
     }
 
@@ -177,25 +175,9 @@ class GameControl {
         }
     }
 
-    /**
-     * Exit key handler to end the current level
-     * @param {*} event - The keydown event object
-     */
-    handleExitKey(event) {
-        if (event.key === 'Escape') {
-            this.currentLevel.continue = false;
-        }
-    }
-    
-    // Helper method to add exit key listener
-    addExitKeyListener() {
-        document.addEventListener('keydown', this.exitKeyListener);
-    }
 
-    // Helper method to remove exit key listener
-    removeExitKeyListener() {
-        document.removeEventListener('keydown', this.exitKeyListener);
-    }
+    
+
 
     // Helper method to save the current canvas id and image data in the game container
     saveCanvasState() {
@@ -241,7 +223,6 @@ class GameControl {
      */
     pause() {
         this.isPaused = true;
-        this.removeExitKeyListener();
         this.saveCanvasState();
         this.hideCanvasState();
         
@@ -252,13 +233,11 @@ class GameControl {
      /**
       * Game level in Game Level helper method to resume the underlying game level
       * 1. Set the current game level to not be paused
-      * 2. Add the exit key listener
-      * 3. Show the current canvas game containers
-      * 4. Start the game loop
+      * 2. Show the current canvas game containers
+      * 3. Start the game loop
       */
     resume() {
         this.isPaused = false;
-        this.addExitKeyListener();
         this.showCanvasState();
         this.gameLoop();
 

@@ -1,5 +1,5 @@
-import { Transform } from "../GameEnginev2/essentials/Transform.js";
-import GameObject from '../GameEnginev2/essentials/GameObject.js';
+import { Transform } from "../GameEnginev1.5/Transform.js";
+import GameObject from '../GameEnginev1.5/GameObject.js';
 
 // Low-level utility Coin class (kept for compatibility)
 export class Coin {

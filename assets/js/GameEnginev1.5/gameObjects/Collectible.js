@@ -1,5 +1,5 @@
 // Collectible.js with DialogueSystem integration
-import Character from "../essentials/Character.js";
+import Character from "../Character.js";
 import DialogueSystem from "../features/DialogueSystem.js";
 
 class Collectible extends Character {

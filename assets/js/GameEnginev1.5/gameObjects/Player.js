@@ -1,4 +1,4 @@
-import Character from '../essentials/Character.js';
+import Character from '../Character.js';
 import TouchControls from '../features/TouchControls.js';
 
 

@@ -1,5 +1,5 @@
 import { Vec2, Vec3 } from '../essentials/Vectors.js';
-import { Transform } from '../essentials/Transform.js';
+import { Transform } from '../Transform.js';
 import Collision from '../essentials/Collision.js';
 import { camera } from '../Camera.js';
 

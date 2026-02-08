@@ -57,6 +57,10 @@ class GameEnv {
      */
     setCanvas() {
         this.canvas = document.getElementById('gameCanvas');
+        // Set container to the parent of the canvas
+        if (this.canvas) {
+            this.container = this.canvas.parentElement;
+        }
         this.ctx = this.canvas.getContext('2d', { willReadFrequently: true });
     }
 
