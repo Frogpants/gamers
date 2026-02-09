@@ -55,7 +55,7 @@ class GameCore {
             // Initialize PauseFeature for handling pause/resume
             this._initializePauseFeature();
             // Setup Escape key for pause/resume
-            this._setupEscapeKey();
+            // DISABLED: this._setupEscapeKey();
         } else {
             // For gamebuilder: defer initialization until GameControl is loaded
             this._initializeGameControlAsync(gameLevelClasses);
@@ -120,7 +120,7 @@ class GameCore {
             // Initialize PauseFeature for handling pause/resume
             this._initializePauseFeature();
             // Setup Escape key for pause/resume
-            this._setupEscapeKey();
+            //DISABLED this._setupEscapeKey();
             
             // Create top control buttons after GameControl is ready (unless disabled)
             if (!this.environment.disablePauseMenu) {
@@ -225,7 +225,6 @@ class GameCore {
     /**
      * Setup Escape key listener for pause/resume functionality.
      * This always works regardless of whether pause control buttons are enabled.
-     */
     _setupEscapeKey() {
         if (this.escapeKeyHandler) {
             // Already set up, don't add duplicate listeners
@@ -260,6 +259,8 @@ class GameCore {
         
         document.addEventListener('keydown', this.escapeKeyHandler);
     }
+
+
 
     /**
      * Creates the pause control buttons (Save Score, Skip Level, Toggle Leaderboard).
