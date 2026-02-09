@@ -1,4 +1,4 @@
-import SoundManager from '../GameEnginev1.5/features/systems/SoundManager.js';
+import SoundManager from './SoundManager.js';
 
 class MarketEvents {
     constructor(gameEnv) {

@@ -1,10 +1,10 @@
-import GameEnvBackground from '../GameEnginev1.5/GameEnvBackground.js';
-import Npc from '../GameEnginev1.5/gameObjects/Npc.js';
-import Player from '../GameEnginev1.5/gameObjects/Player.js';
-import GameControl from '../GameEnginev1.5/GameControl.js';
+import GameEnvBackground from './GameEngine/GameEnvBackground.js';
+import Npc from './GameEngine/Npc.js';
+import Player from './GameEngine/Player.js';
+import GameControl from './GameEngine/GameControl.js';
 import GameLevelMeteorBlaster from './GameLevelMeteorBlaster.js';
 
-import Game from './AdventureGame.js';
+import Game from './Game.js';
 import GameLevelWallstreet from './GameLevelWallstreet.js';
 class GameLevelRetro {
   /**

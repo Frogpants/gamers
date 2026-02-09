@@ -4,29 +4,6 @@ title: Adventure Game
 permalink: /gamify/adventureGame
 ---
 
-<style>
-body {
-    margin: 0;
-    padding: 0;
-}
-
-#gameContainer {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    width: 100%;
-    padding-top: 20px;
-    position: relative;
-    background: #000;
-}
-
-#gameCanvas {
-    display: block;
-    max-width: 100%;
-    height: auto;
-}
-</style>
-
 <div id="gameContainer">
     <div id="promptDropDown" class="promptDropDown" style="z-index: 9999"></div>
     <canvas id='gameCanvas'></canvas>
@@ -34,9 +11,11 @@ body {
 
 <script type="module">
 
-    // Adventure Game assets locations (use AdventureGame wrapper + GameControl)
-    import Core from "{{site.baseurl}}/assets/js/adventureGame/AdventureGame.js";
-    import GameControl from "{{site.baseurl}}/assets/js/GameEnginev1.5/GameControl.js";
+    // Import PauseMenu TEST
+    import PauseMenu from "{{site.baseurl}}/assets/js/mansionGame/ui/PauseMenu.js";
+    
+    // Adnventure Game assets locations
+    import Game from "{{site.baseurl}}/assets/js/adventureGame/GameEngine/Game.js";
     import GameLevelWater from "{{site.baseurl}}/assets/js/adventureGame/GameLevelWater.js";
     import GameLevelDesert from "{{site.baseurl}}/assets/js/adventureGame/GameLevelDesert.js";
     import GameLevelEnd from "{{site.baseurl}}/assets/js/adventureGame/GameLevelEnd.js";
@@ -56,8 +35,14 @@ body {
         gameLevelClasses: gameLevelClasses
 
     }
-    // Launch Adventure Game using the central core and adventure GameControl
-    const game = Core.main(environment, GameControl);
+    // Launch Adventure Game and keep the returned Game instance
+    const game = Game.main(environment);
 
-    // PauseMenu is auto-initialized by the game's Game module.
+    // Instantiate the shared PauseMenu. The PauseMenu will register itself
+    // with the game's GameControl so Escape will toggle the menu automatically.
+    try {
+        new PauseMenu(game.gameControl, { parentId: 'gameContainer' });
+    } catch (err) {
+        console.warn('PauseMenu could not be initialized on this page:', err);
+    }
 </script>

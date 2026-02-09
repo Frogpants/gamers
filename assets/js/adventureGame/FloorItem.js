@@ -1,4 +1,4 @@
-import Inventory from "../GameEnginev1.5/features/Inventory.js";
+import Inventory from './Inventory.js';
 import FloorItemManager from './FloorItemManager.js';
 
 class FloorItem {

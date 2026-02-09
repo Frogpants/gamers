@@ -1,12 +1,12 @@
-import GameEnvBackground from '../GameEnginev1.5/GameEnvBackground.js';
-import BackgroundParallax from '../GameEnginev1.5/features/rendering/BackgroundParallax.js';
-import Player from '../GameEnginev1.5/gameObjects/Player.js';
-import Npc from '../GameEnginev1.5/gameObjects/Npc.js';  // Direct import for portal creation
-import Collectible from '../GameEnginev1.5/gameObjects/Collectible.js';
-import Barrier from './Barrier.js';
-import Game from './AdventureGame.js';
-import Enemy from '../GameEnginev1.5/gameObjects/Enemy.js';
-import DialogueSystem from '../GameEnginev1.5/features/DialogueSystem.js';
+import GamEnvBackground from './GameEngine/GameEnvBackground.js';
+import BackgroundParallax from './GameEngine/BackgroundParallax.js';
+import Player from './GameEngine/Player.js';
+import Npc from './GameEngine/Npc.js';  // Direct import for portal creation
+import Collectible from './GameEngine/Collectible.js';
+import Quiz from './Quiz.js';
+import Game from './GameEngine/Game.js';
+import Enemy from './GameEngine/Enemy.js';
+import DialogueSystem from './DialogueSystem.js';
 
 class GameLevelEnd {
   constructor(gameEnv) {
@@ -38,7 +38,7 @@ class GameLevelEnd {
         position: { x: 0, y: 0 },
         velocity: 0.2,  // Slower velocity for a more subtle effect
         layer: 0,  // Explicitly set the layer to 0 (furthest back)
-        zIndex: -1  // Lower z-index so main background appears on top
+        zIndex: 1  // Use positive z-index but keep it low
     };
     
     const image_src_end = path + "/images/gamify/TransparentEnd.png";
@@ -138,20 +138,19 @@ class GameLevelEnd {
             }
             
             // Find all player objects
-          const players = this.gameEnv.gameObjects.filter(obj => 
-            obj && obj.constructor && obj.constructor.name === 'Player' && obj.transform
-          );
+            const players = this.gameEnv.gameObjects.filter(obj => 
+                obj.constructor.name === 'Player'
+            );
             
-          if (!players.length || !this.transform) return;
+            if (players.length === 0) return;
             
             // Find nearest player
             let nearest = players[0];
             let minDist = Infinity;
 
             for (const player of players) {
-            if (!player.transform) continue;
-              const dx = player.transform.x - this.transform.x;
-              const dy = player.transform.y - this.transform.y;
+                const dx = player.position.x - this.position.x;
+                const dy = player.position.y - this.position.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 if (dist < minDist) {
                     minDist = dist;
@@ -159,26 +158,23 @@ class GameLevelEnd {
                 }
             }
 
-          if (!nearest || !nearest.transform) return;
-
             // Move towards nearest player
             const speed = 1.5; // Adjust speed as needed
-            const dx = nearest.transform.x - this.transform.x;
-            const dy = nearest.transform.y - this.transform.y;
+            const dx = nearest.position.x - this.position.x;
+            const dy = nearest.position.y - this.position.y;
             const angle = Math.atan2(dy, dx);
             
             // Update position
-            this.transform.x += Math.cos(angle) * speed;
-            this.transform.y += Math.sin(angle) * speed;
+            this.position.x += Math.cos(angle) * speed;
+            this.position.y += Math.sin(angle) * speed;
             
             // Check for collision with any player
             for (const player of players) {
                 // Calculate distance for hitbox collision
-                if (!player.transform || !this.transform || !player.width || !player.height || !this.width || !this.height) continue;
-                const playerX = player.transform.x + player.width / 2;
-                const playerY = player.transform.y + player.height / 2;
-                const enemyX = this.transform.x + this.width / 2;
-                const enemyY = this.transform.y + this.height / 2;
+                const playerX = player.position.x + player.width / 2;
+                const playerY = player.position.y + player.height / 2;
+                const enemyX = this.position.x + this.width / 2;
+                const enemyY = this.position.y + this.height / 2;
                 
                 const dx = playerX - enemyX;
                 const dy = playerY - enemyY;
@@ -195,8 +191,8 @@ class GameLevelEnd {
                     // === PLAYER DEATH: ALL FUNCTIONALITY INLINE ===
                     
                     // 1. Play death animation - particle effect
-                    const playerX = player.transform.x;
-                    const playerY = player.transform.y;
+                    const playerX = player.position.x;
+                    const playerY = player.position.y;
                     
                     // Create explosion effect
                     for (let i = 0; i < 20; i++) {
@@ -324,7 +320,7 @@ class GameLevelEnd {
               document.removeEventListener('keydown', handleKeyPress);
               
               // Redirect to the specified URL
-              window.location.href = '/assets/js/adventureGame/adventureLogic/endplatformer.html';
+              window.location.href = '/assets/js/adventureGame/adPlatEngine/endplatformer.html';
             }
           };
           
@@ -338,10 +334,7 @@ class GameLevelEnd {
         }
     };
 
-    const basePath = path && path.includes('/adventureGame') ? path.replace('/adventureGame', '') : path;
-    const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
-    const assetRoot = basePath ? origin + basePath : origin;
-    const sprite_src_eye = `${assetRoot}/images/gamify/eyeOfEnder.png`;
+    const sprite_src_eye = path + "/images/gamify/eyeOfEnder.png";
     const sprite_data_eye = {
         id: 'Eye of Ender',
         greeting: `Press E to claim this Eye of Ender.`,
@@ -372,7 +365,7 @@ class GameLevelEnd {
             
             // Get all players from game objects
             const players = this.gameEnv.gameObjects.filter(obj => 
-              obj && obj.constructor && obj.constructor.name === 'Player' && obj.transform
+                obj.constructor.name === 'Player'
             );
             
             // Check if any player is in collision range with this eye
@@ -380,11 +373,10 @@ class GameLevelEnd {
             
             for (const player of players) {
                 // Calculate distance between player and eye
-                if (!player.transform || !this.transform) continue;
-                const playerX = player.transform.x + player.width / 2;
-                const playerY = player.transform.y + player.height / 2;
-                const eyeX = this.transform.x + this.width / 2;
-                const eyeY = this.transform.y + this.height / 2;
+                const playerX = player.position.x + player.width / 2;
+                const playerY = player.position.y + player.height / 2;
+                const eyeX = this.position.x + this.width / 2;
+                const eyeY = this.position.y + this.height / 2;
                 
                 const dx = playerX - eyeX;
                 const dy = playerY - eyeY;
@@ -414,8 +406,8 @@ class GameLevelEnd {
             
             // ALWAYS MOVE TO NEW POSITION IMMEDIATELY
             this.move(
-              (Math.random() * width/2.6) + width/19, 
-              (Math.random() * height/3.5) + height/2.7
+                (Math.random() * width/2.6) + width/19, 
+                (Math.random() * height/3.5) + height/2.7
             );
             
             // Show a quick message that doesn't block gameplay
@@ -490,7 +482,7 @@ class GameLevelEnd {
     
     this.classes = [
       { class: BackgroundParallax, data: image_data_parallax },  // Add parallax background first
-      { class: GameEnvBackground, data: image_data_end },         // Then regular background
+      { class: GamEnvBackground, data: image_data_end },         // Then regular background
       { class: Player, data: sprite_data_steve },
       { class: Npc, data: sprite_data_endship },
       { class: Collectible, data: sprite_data_eye },
@@ -549,8 +541,7 @@ class GameLevelEnd {
         
         // FIX: use this.gameEnv.path instead of path
         if (this.gameEnv && this.gameEnv.path) {
-          const basePath = this.gameEnv.path.includes('/adventureGame') ? this.gameEnv.path.replace('/adventureGame', '') : this.gameEnv.path;
-          portal.style.backgroundImage = `url('${basePath}/images/gamify/exitportalfull.png')`;
+            portal.style.backgroundImage = `url('${this.gameEnv.path}/images/gamify/exitportalfull.png')`;
         } else {
             // Fallback to a relative path if gameEnv.path is not available
             portal.style.backgroundImage = "url('./images/gamify/exitportalfull.png')";
@@ -684,25 +675,11 @@ class GameLevelEnd {
     console.log("Creating stopwatch");
     
     // Get the stats container to position timer relative to it
-    let statsContainer = document.getElementById('stats-container');
+    const statsContainer = document.getElementById('stats-container');
     if (!statsContainer) {
-      // Create a minimal placeholder once after a few retries to prevent endless recursion and black UI
-      this._stopwatchRetries = (this._stopwatchRetries || 0) + 1;
-      if (this._stopwatchRetries < 5) {
-        console.warn("Stats container not found, delaying timer creation");
-        setTimeout(() => this.createStandaloneStopwatch(), 200);
-        return;
-      }
-
-      const placeholder = document.createElement('div');
-      placeholder.id = 'stats-container';
-      placeholder.style.position = 'fixed';
-      placeholder.style.top = '20px';
-      placeholder.style.right = '20px';
-      placeholder.style.zIndex = '999';
-      document.body.appendChild(placeholder);
-      console.warn("Stats container missing; created placeholder for stopwatch positioning");
-      statsContainer = placeholder;
+      console.error("Stats container not found, delaying timer creation");
+      setTimeout(() => this.createStandaloneStopwatch(), 200);
+      return;
     }
     
     // Get the position of the stats container
@@ -799,12 +776,7 @@ class GameLevelEnd {
     
     // Check if gameEnv exists before accessing path
     if (this.gameEnv && this.gameEnv.path) {
-        const basePath = this.gameEnv && this.gameEnv.path && this.gameEnv.path.includes('/adventureGame')
-          ? this.gameEnv.path.replace('/adventureGame', '')
-          : (this.gameEnv ? this.gameEnv.path : '');
-        const origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin : '';
-        const assetRoot = basePath ? origin + basePath : origin;
-        eyeIcon.style.backgroundImage = `url('${assetRoot}/images/gamify/eyeOfEnder.png')`;
+        eyeIcon.style.backgroundImage = `url('${this.gameEnv.path}/images/gamify/eyeOfEnder.png')`;
     } else {
         // Fallback to a relative path if gameEnv.path is not available
         eyeIcon.style.backgroundImage = "url('./images/gamify/eyeOfEnder.png')";
@@ -894,11 +866,8 @@ class GameLevelEnd {
       return;
     }
     
-    // Extract game name from the URL (e.g., 'adventureGame', 'mansionGame')
-    const gameName = Game.gameName || this._extractGameName();
-    
-    // Endpoint for updating balance with game name
-    const endpoint = `${Game.javaURI}/rpg_answer/updateBalance/${personId}/${amount}/${gameName}`;
+    // Endpoint for updating balance
+    const endpoint = `${Game.javaURI}/rpg_answer/updateBalance/${personId}/${amount}`;
     
     // Send request to update balance
     fetch(endpoint, Game.fetchOptions)
@@ -914,14 +883,6 @@ class GameLevelEnd {
       .catch(error => {
         console.error("Error updating balance on server:", error);
       });
-  }
-
-  // Helper to extract game name from URL
-  _extractGameName() {
-    if (typeof window === 'undefined') return 'unknown';
-    const pathname = window.location.pathname;
-    const match = pathname.match(/(\w+Game)/);
-    return match ? match[1] : 'unknown';
   }
   
   // Show floating points animation
