@@ -10,6 +10,7 @@ import GameLevelMeteorBlaster from './GameLevelMeteorBlaster.js';
 import GameLevelMinesweeper from './GameLevelMinesweeper.js';
 import GameLevelEnd from './GameLevelEnd.js';
 import GameLevelOverworld from './GameLevelOverworld.js';
+import AINpc from './AINpc.js';
 
 class GameLevelDesert {
   constructor(gameEnv) {
@@ -847,6 +848,43 @@ class GameLevelDesert {
         }
     };
 
+    // ========== ADD HISTORIAN NPC HERE ==========
+    const historianNpc = new AINpc({
+        id: "ProfessorHistory",  
+        greeting: "Hello! I'm an expert in history!",
+        expertise: "history",
+        sprite: path + "/assets/js/adventureGame/HistoryProf.png",  // resolve via gameEnv.path so browser loads /assets/js/...
+        spriteWidth: 559,
+        spriteHeight: 263,
+        scaleFactoR: 8,
+        animationRate: 10,
+        randomPosition: false,
+        posX: width * 0.3,
+        posY: height * 0.5,
+        gameEnv: gameEnv,
+        // The HistoryProf.png has 4 rows; use only the last row (row index 3) for animation
+        orientation: { rows: 3, columns: 6 },
+        // Map static poses to the first three rows (single-frame) and animation to last row
+        up: { row: 0, start: 0, columns: 1 },
+        right: { row: 1, start: 0, columns: 1 },
+        left: { row: 2, start: 0, columns: 1 },
+        // Down (and diagonals) use the last row and animate across 4 frames
+        down: { row: 3, start: 0, columns: 4 },
+        downLeft: { row: 3, start: 0, columns: 4 },
+        downRight: { row: 3, start: 0, columns: 4 },
+        upLeft: { row: 3, start: 0, columns: 4 },
+        upRight: { row: 3, start: 0, columns: 4 },
+        knowledgeBase: {
+            history: [
+                {
+                    question: "What is ancient Egypt?",
+                    answer: "Ancient Egypt was one of the world's greatest civilizations!"
+                }
+            ]
+        }
+    }).getData();
+
+
     // List of objects defnitions for this level
     this.classes = [
       { class: GamEnvBackground, data: image_data_desert },
@@ -859,7 +897,8 @@ class GameLevelDesert {
       { class: Npc, data: sprite_data_crypto },
       { class: Npc, data: sprite_data_minesweeper },
       { class: Npc, data: sprite_data_chickenj },
-      { class: Npc, data: sprite_data_endportal } 
+      { class: Npc, data: sprite_data_endportal } ,
+      { class: Npc, data: historianNpc}
     ];
   }
 

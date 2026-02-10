@@ -1,4 +1,4 @@
-import { baseurl, pythonURI, fetchOptions } from './config.js';
+import { baseurl, pythonURI, fetchOptions } from '/assets/js/api/config.js';
 
 console.log("login.js loaded");
 

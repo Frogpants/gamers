@@ -3,7 +3,7 @@
  */
 
 import DialogueSystem from './DialogueSystem.js'; 
-import { pythonURI, javaURI, fetchOptions } from '../../../api/config.js';
+import { pythonURI, javaURI, fetchOptions } from '/assets/js/api/config.js';
 
 class AINpc {
   constructor(config) {
