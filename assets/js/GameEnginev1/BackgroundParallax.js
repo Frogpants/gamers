@@ -12,21 +12,26 @@ export class BackgroundParallax extends GameObject {
      */
     constructor(data = null, gameEnv = null) {
         super(gameEnv);
-        
         if (!data || !data.src) {
             console.error('BackgroundParallax requires a src property in data');
             throw new Error('BackgroundParallax requires a src property in data');
         }
-        
+
         this.data = data;
-        this.position = data.position || { x: 0, y: 0 };
-        this.velocity = data.velocity || 1;
-        
+        this.position = data.position ? { x: data.position.x || 0, y: data.position.y || 0 } : { x: 0, y: 0 };
+        // Support either `parallaxSpeed` or `velocity` in data
+        this.parallaxSpeed = (typeof data.parallaxSpeed !== 'undefined') ? data.parallaxSpeed : (typeof data.velocity !== 'undefined' ? data.velocity : 1);
+        this.verticalFactor = (typeof data.verticalFactor !== 'undefined') ? data.verticalFactor : 0;
+        this.moveOnKeyAction = !!data.moveOnKeyAction;
+
+        // Keep gameEnv reference for optional runtime controls
+        this.gameEnv = gameEnv || this.gameEnv || null;
+
         // Set the properties of the background
         this.image = new Image();
         this.image.src = data.src;
         this.isInitialized = false; // Flag to track initialization
-        
+
         // Finish initializing the background after the image loads 
         this.image.onload = () => {
             // Width and height come from the image
@@ -38,25 +43,27 @@ export class BackgroundParallax extends GameObject {
             this.canvas.style.position = "absolute";
             this.canvas.id = data.id || "parallax-background";
             this.ctx = this.canvas.getContext("2d");
-            
-            // Set z-index and opacity directly instead of using data
-            this.canvas.style.zIndex = "1"; // Use positive value to ensure visibility
-            this.canvas.style.opacity = "0.3"; // 30% opacity
-            
+
+            // Apply style overrides if provided
+            this.canvas.style.zIndex = String((typeof data.zIndex !== 'undefined') ? data.zIndex : 1);
+            this.canvas.style.opacity = (typeof data.opacity !== 'undefined') ? String(data.opacity) : "0.3";
+
             // Align the canvas size to the gameCanvas
             this.alignCanvas();
 
             // Append the canvas to the DOM first in the container to be behind everything
             const gameContainer = document.getElementById("gameContainer");
-            if (gameContainer.firstChild) {
+            if (gameContainer && gameContainer.firstChild) {
                 gameContainer.insertBefore(this.canvas, gameContainer.firstChild);
-            } else {
+            } else if (gameContainer) {
                 gameContainer.appendChild(this.canvas);
+            } else {
+                document.body.appendChild(this.canvas);
             }
-            
+
             this.isInitialized = true; // Mark as initialized
         };
-        
+
         this.image.onerror = () => {
             console.error("Error loading background parallax image:", data.src);
         };
@@ -72,26 +79,38 @@ export class BackgroundParallax extends GameObject {
             console.error("Game canvas not found");
             return;
         }
-        
+        if (!this.canvas) return;
         this.canvas.width = gameCanvas.width;
         this.canvas.height = gameCanvas.height;
-        this.canvas.style.left = gameCanvas.style.left;
-        this.canvas.style.top = gameCanvas.style.top;
+        this.canvas.style.left = gameCanvas.style.left || "0px";
+        this.canvas.style.top = gameCanvas.style.top || "0px";
     }
 
     /**
      * Update is called by GameLoop on all GameObjects 
      */
     update() {
+        if (!this.isInitialized) return;
+
+        // compute current speed — supports moveOnKeyAction using a gameEnv backgroundDirection
+        const direction = (this.moveOnKeyAction && this.gameEnv && typeof this.gameEnv.backgroundDirection !== 'undefined') ? this.gameEnv.backgroundDirection : 1;
+        const speed = this.parallaxSpeed * direction;
+
         // Update the position for parallax scrolling
-        this.position.x -= this.velocity; // Move left
-        this.position.y += this.velocity; // Move down (for snowfall effect)
+        this.position.x -= speed; // Move horizontally
+        this.position.y += speed * this.verticalFactor; // Optional vertical movement
 
         // Wrap the position to prevent overflow
         if (this.position.x < -this.width) {
             this.position.x = 0;
         }
+        if (this.position.x > this.width) {
+            this.position.x = 0;
+        }
         if (this.position.y > this.height) {
+            this.position.y = 0;
+        }
+        if (this.position.y < -this.height) {
             this.position.y = 0;
         }
 
@@ -103,7 +122,7 @@ export class BackgroundParallax extends GameObject {
      * Draws the background image within the canvas
      */
     draw() {
-        if (!this.isInitialized) {
+        if (!this.isInitialized || !this.ctx) {
             return; // Skip drawing if not initialized
         }
 
@@ -163,6 +182,86 @@ export class BackgroundParallax extends GameObject {
                 this.gameEnv.gameObjects.splice(index, 1);
             }
         }
+    }
+
+    /**
+     * Convenience test harness: create a simple 3-layer parallax set for lessons
+     * Usage: BackgroundParallax.createTestBackgrounds(gameEnv);
+     * Returns array of created BackgroundParallax objects (may be empty on error)
+     */
+    static createTestBackgrounds(gameEnv) {
+        if (!gameEnv) {
+            console.error("createTestBackgrounds requires a gameEnv");
+            return [];
+        }
+        const path = gameEnv.path || "";
+        const layers = [
+            { id: "parallax-far", src: path + "/images/gamify/parallaxbg.png", parallaxSpeed: 0.2, zIndex: 1, opacity: 0.35, verticalFactor: 0.0 },
+            { id: "parallax-mid", src: path + "/images/gamify/parallaxbg.png", parallaxSpeed: 0.5, zIndex: 2, opacity: 0.55, verticalFactor: 0.02 },
+            { id: "parallax-near", src: path + "/images/gamify/parallaxbg.png", parallaxSpeed: 1.0, zIndex: 3, opacity: 0.85, verticalFactor: 0.05 }
+        ];
+        const created = [];
+        layers.forEach(cfg => {
+            try {
+                const bg = new BackgroundParallax(cfg, gameEnv);
+                // add to gameEnv.gameObjects if available so engine can call update/draw
+                if (gameEnv.gameObjects && Array.isArray(gameEnv.gameObjects)) {
+                    gameEnv.gameObjects.push(bg);
+                }
+                created.push(bg);
+            } catch (err) {
+                console.error("Failed to create test background", err);
+            }
+        });
+        return created;
+    }
+
+    /**
+     * Create lesson-specific backgrounds. Each returns created BackgroundParallax instances array.
+     */
+    static createForSquares(gameEnv) {
+        if (!gameEnv) return [];
+        const path = gameEnv.path || "";
+        const cfg = { id: 'bg-squares', src: path + '/images/gamify/parallax-squares.png', parallaxSpeed: 0.6, zIndex: 2, opacity: 0.5 };
+        try {
+            const bg = new BackgroundParallax(cfg, gameEnv);
+            if (gameEnv.gameObjects && Array.isArray(gameEnv.gameObjects)) gameEnv.gameObjects.push(bg);
+            return [bg];
+        } catch (e) { console.error(e); return []; }
+    }
+
+    static createForBasic(gameEnv) {
+        if (!gameEnv) return [];
+        const path = gameEnv.path || "";
+        const cfg = { id: 'bg-basic', src: path + '/images/gamify/parallax-basic.png', parallaxSpeed: 0.4, zIndex: 1, opacity: 0.4 };
+        try {
+            const bg = new BackgroundParallax(cfg, gameEnv);
+            if (gameEnv.gameObjects && Array.isArray(gameEnv.gameObjects)) gameEnv.gameObjects.push(bg);
+            return [bg];
+        } catch (e) { console.error(e); return []; }
+    }
+
+    static createForEnd(gameEnv) {
+        if (!gameEnv) return [];
+        const path = gameEnv.path || "";
+        const cfg = { id: 'bg-end', src: path + '/images/gamify/parallax-end.png', parallaxSpeed: 0.25, zIndex: 1, opacity: 0.6, verticalFactor: 0.01 };
+        try {
+            const bg = new BackgroundParallax(cfg, gameEnv);
+            if (gameEnv.gameObjects && Array.isArray(gameEnv.gameObjects)) gameEnv.gameObjects.push(bg);
+            return [bg];
+        } catch (e) { console.error(e); return []; }
+    }
+
+    static createForFortuneFinders(gameEnv) {
+        if (!gameEnv) return [];
+        const path = gameEnv.path || "";
+        // Slight snowfall / slow drift effect
+        const cfg = { id: 'bg-fortune', src: path + '/images/gamify/parallax-fortune.png', parallaxSpeed: 0.15, zIndex: 1, opacity: 0.45, verticalFactor: 0.03 };
+        try {
+            const bg = new BackgroundParallax(cfg, gameEnv);
+            if (gameEnv.gameObjects && Array.isArray(gameEnv.gameObjects)) gameEnv.gameObjects.push(bg);
+            return [bg];
+        } catch (e) { console.error(e); return []; }
     }
 }
 
