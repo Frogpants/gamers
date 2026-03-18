@@ -1,0 +1,91 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>BackgroundParallax Test Harness</title>
+  <style>
+    body { margin:0; font-family: Arial, sans-serif; background:#222; color:#eee; }
+    #controls { position:fixed; right:10px; top:10px; background:rgba(0,0,0,0.6); padding:10px; border-radius:6px; z-index:9999; }
+    button { display:block; margin:6px 0; width:160px; }
+    #log { position:fixed; left:10px; bottom:10px; width:360px; max-height:40vh; overflow:auto; background:rgba(0,0,0,0.6); padding:8px; border-radius:6px; font-size:13px; }
+    #gameContainer { position:relative; width:800px; height:480px; margin:40px; background:#444; overflow:hidden; }
+    #gameCanvas { position:absolute; left:0; top:0; width:800px; height:480px; background:transparent; z-index:10; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <div><strong>BackgroundParallax Test</strong></div>
+    <button id="btn-squares">Load Squares</button>
+    <button id="btn-basic">Load Basic</button>
+    <button id="btn-end">Load End</button>
+    <button id="btn-fortune">Load FortuneFinders</button>
+    <button id="btn-clear">Clear Backgrounds</button>
+  </div>
+
+  <div id="gameContainer">
+    <canvas id="gameCanvas" width="800" height="480"></canvas>
+  </div>
+
+  <div id="log"></div>
+
+  <script type="module">
+    import BackgroundParallax from '../BackgroundParallax.js';
+
+    const logEl = document.getElementById('log');
+    function log(...args) {
+      const line = document.createElement('div');
+      line.textContent = args.map(a => (typeof a === 'object' ? JSON.stringify(a) : String(a))).join(' ');
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(...args);
+    }
+
+    // Minimal mock gameEnv that the BackgroundParallax expects
+    const gameEnv = {
+      path: '../../..', // adjust so image paths resolve relative to project root
+      gameObjects: [],
+      backgroundDirection: 1
+    };
+
+    // keep track of created backgrounds
+    let created = [];
+
+    function createAndLog(factory) {
+      const arr = factory(gameEnv);
+      created = created.concat(arr);
+      log('Created', arr.map(a => a && a.canvas ? a.canvas.id : 'unknown'));
+    }
+
+    document.getElementById('btn-squares').addEventListener('click', () => {
+      createAndLog(BackgroundParallax.createForSquares);
+    });
+    document.getElementById('btn-basic').addEventListener('click', () => {
+      createAndLog(BackgroundParallax.createForBasic);
+    });
+    document.getElementById('btn-end').addEventListener('click', () => {
+      createAndLog(BackgroundParallax.createForEnd);
+    });
+    document.getElementById('btn-fortune').addEventListener('click', () => {
+      createAndLog(BackgroundParallax.createForFortuneFinders);
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', () => {
+      created.forEach(bg => { try { bg.destroy(); } catch(e){} });
+      log('Cleared', created.length, 'background(s)');
+      created = [];
+      gameEnv.gameObjects = [];
+    });
+
+    // Simple animation loop to call update on gameObjects
+    function loop() {
+      if (gameEnv.gameObjects && gameEnv.gameObjects.length) {
+        gameEnv.gameObjects.forEach(g => { try { g.update(); } catch(e){ console.warn(e); }});
+      }
+      requestAnimationFrame(loop);
+    }
+    loop();
+
+    log('Test harness ready. Click a button to load a background.');
+  </script>
+</body>
+</html>
